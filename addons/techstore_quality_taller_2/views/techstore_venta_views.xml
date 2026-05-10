@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="view_techstore_venta_list" model="ir.ui.view">
+        <field name="name">techstore.venta.list</field>
+        <field name="model">techstore.venta</field>
+        <field name="arch" type="xml">
+            <list string="Ventas TechStore">
+                <field name="name"/>
+                <field name="cliente_id"/>
+                <field name="producto_id"/>
+                <field name="cantidad"/>
+                <field name="precio_unitario"/>
+                <field name="stock_disponible"/>
+                <field name="descuento"/>
+                <field name="subtotal"/>
+                <field name="iva"/>
+                <field name="total"/>
+                <field name="tiempo_respuesta"/>
+                <field name="estado_calidad"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_techstore_venta_form" model="ir.ui.view">
+        <field name="name">techstore.venta.form</field>
+        <field name="model">techstore.venta</field>
+        <field name="arch" type="xml">
+            <form string="Venta TechStore">
+
+                <header>
+                    <button name="action_marcar_observado"
+                            type="object"
+                            string="Marcar observado"
+                            class="btn-secondary"/>
+
+                    <button name="action_marcar_aceptable"
+                            type="object"
+                            string="Marcar aceptable"
+                            class="btn-primary"/>
+
+                    <field name="estado_calidad"
+                           widget="statusbar"
+                           statusbar_visible="pendiente,observado,aceptable"/>
+                </header>
+
+                <sheet>
+
+                    <group>
+                        <group string="Datos principales">
+                            <field name="name"/>
+                            <field name="cliente_id"/>
+                            <field name="producto_id"/>
+                            <field name="cantidad"/>
+                        </group>
+
+                        <group string="Datos del producto">
+                            <field name="precio_unitario"/>
+                            <field name="stock_disponible"/>
+                            <field name="descuento"/>
+                        </group>
+                    </group>
+
+                    <group string="Resultados calculados">
+                        <field name="subtotal" readonly="1"/>
+                        <field name="iva" readonly="1"/>
+                        <field name="total" readonly="1"/>
+                        <field name="tiempo_respuesta" readonly="1"/>
+                    </group>
+
+                    <group string="Observación del estudiante">
+                        <field name="observacion"
+                               placeholder="Registrar aquí el error detectado, impacto y mejora propuesta."/>
+                    </group>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+    <record id="view_techstore_venta_search" model="ir.ui.view">
+        <field name="name">techstore.venta.search</field>
+        <field name="model">techstore.venta</field>
+        <field name="arch" type="xml">
+
+            <search string="Buscar ventas">
+
+                <field name="cliente_id"/>
+                <field name="producto_id"/>
+                <field name="estado_calidad"/>
+
+                <filter string="Observadas"
+                        name="observadas"
+                        domain="[('estado_calidad','=','observado')]"/>
+
+                <filter string="Aceptables"
+                        name="aceptables"
+                        domain="[('estado_calidad','=','aceptable')]"/>
+
+                <group expand="0" string="Agrupar por">
+
+                    <filter string="Cliente"
+                            name="group_cliente"
+                            context="{'group_by':'cliente_id'}"/>
+
+                    <filter string="Producto"
+                            name="group_producto"
+                            context="{'group_by':'producto_id'}"/>
+
+                    <filter string="Estado"
+                            name="group_estado"
+                            context="{'group_by':'estado_calidad'}"/>
+
+                </group>
+
+            </search>
+
+        </field>
+    </record>
+
+    <record id="action_techstore_venta" model="ir.actions.act_window">
+        <field name="name">Ventas</field>
+        <field name="res_model">techstore.venta</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

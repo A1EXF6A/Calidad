@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <menuitem id="menu_techstore_quality_root"
+              name="TechStore Quality Taller"
+              sequence="10"/>
+
+    <menuitem id="menu_techstore_quality_clientes"
+              name="Clientes"
+              parent="menu_techstore_quality_root"
+              action="action_techstore_cliente"
+              sequence="10"/>
+
+    <menuitem id="menu_techstore_quality_productos"
+              name="Productos"
+              parent="menu_techstore_quality_root"
+              action="action_techstore_producto"
+              sequence="20"/>
+
+    <menuitem id="menu_techstore_quality_ventas"
+              name="Ventas"
+              parent="menu_techstore_quality_root"
+              action="action_techstore_venta"
+              sequence="30"/>
+
+</odoo>
