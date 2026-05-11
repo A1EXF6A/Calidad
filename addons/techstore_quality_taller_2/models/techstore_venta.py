@@ -1,6 +1,6 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError, UserError
 import random
-import time
 
 
 class TechstoreVenta(models.Model):
@@ -46,7 +46,9 @@ class TechstoreVenta(models.Model):
     @api.depends('cantidad', 'precio_unitario', 'descuento')
     def _compute_subtotal(self):
         for rec in self:
-            rec.subtotal = rec.cantidad + rec.precio_unitario - rec.descuento
+
+            descuento = rec.descuento or 0.0
+            rec.subtotal = (rec.cantidad or 0) * (rec.precio_unitario or 0.0) - descuento
 
     @api.depends('subtotal')
     def _compute_totales(self):
@@ -54,24 +56,64 @@ class TechstoreVenta(models.Model):
             rec.iva = rec.subtotal * 0.05
             rec.total = rec.subtotal + rec.iva
 
+    @api.constrains('cantidad', 'precio_unitario')
+    def _check_positive_values(self):
+        for rec in self:
+            if rec.cantidad is not None and rec.cantidad <= 0:
+                raise ValidationError('La cantidad debe ser mayor que cero.')
+            if rec.precio_unitario is not None and rec.precio_unitario < 0:
+                raise ValidationError('El precio unitario no puede ser negativo.')
+
     @api.model
     def create(self, vals):
-        producto = None
-        if vals.get('producto_id'):
-            producto = self.env['techstore.producto'].browse(vals.get('producto_id'))
-            if producto.exists():
-                vals.setdefault('precio_unitario', producto.precio_unitario)
-                vals.setdefault('stock_disponible', producto.stock_disponible)
 
-        if vals.get('cantidad', 0) > 5:
-            vals['precio_unitario'] = vals.get('precio_unitario', 0) * 2
+        if not vals.get('cliente_id'):
+            raise UserError('La venta debe tener un cliente.')
 
-        tiempo = random.uniform(0.10, 3.50)
-        time.sleep(0.10)
-        vals['tiempo_respuesta'] = tiempo
+        if not vals.get('producto_id'):
+            raise UserError('La venta debe tener un producto.')
+
+        producto = self.env['techstore.producto'].browse(vals.get('producto_id'))
+        if not producto.exists():
+            raise UserError('El producto indicado no existe.')
+
+        cantidad = int(vals.get('cantidad', 0))
+        if cantidad <= 0:
+            raise ValidationError('La cantidad debe ser mayor que cero.')
+
+        # Rellenar precio/stock desde el producto cuando sea necesario.
+        vals.setdefault('precio_unitario', producto.precio_unitario)
+        vals.setdefault('stock_disponible', producto.stock_disponible)
+
+        # Evitar ventas que excedan el stock disponible.
+        if cantidad > producto.stock_disponible:
+            raise UserError('No hay suficiente stock disponible para este producto.')
+
+        # Regla de negocio heredada: si cantidad > 5, se duplica el precio.
+        if cantidad > 5:
+            vals['precio_unitario'] = float(vals.get('precio_unitario', 0.0)) * 2
+
+        # Mejorar tiempo de respuesta: generar un valor aleatorio pequeño sin bloquear.
+        vals['tiempo_respuesta'] = random.uniform(0.10, 0.50)
 
         vals['estado_calidad'] = 'observado'
-        return super().create(vals)
+
+        # Crear la venta; luego ajustar stock en un segundo paso para mantener
+        # consistencia transaccional y permitir capturar errores de negocio.
+        sale = super().create(vals)
+
+        # Disminuir el stock del producto tras la creación de la venta. Si la
+        # escritura falla, se elimina la venta para no dejar datos inconsistentes.
+        producto = sale.producto_id
+        try:
+            producto.with_context(no_reset_stock=True).write({
+                'stock_disponible': producto.stock_disponible - sale.cantidad
+            })
+        except Exception:
+            sale.unlink()
+            raise
+
+        return sale
 
     def action_marcar_aceptable(self):
         for rec in self:

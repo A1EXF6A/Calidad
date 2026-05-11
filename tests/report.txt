@@ -1,0 +1,78 @@
+TechStore API Test Report
+Generated: 2026-05-10 17:06:54
+Base URL: http://localhost:8069
+
+---
+Test: Crear cliente válido
+Path: /techstore/api/clients
+Payload: {'name': 'Juan Perez', 'cedula': '1000765654', 'email': 'juan1778450813765654@test.com', 'telefono': '0913765654'}
+HTTP status: 200
+Time (s): 0.0381
+Response: {'jsonrpc': '2.0', 'id': None, 'result': {'success': True, 'id': 20}}
+---
+Test: Crear cliente sin name (error esperado)
+Path: /techstore/api/clients
+Payload: {'cedula': '2000765654', 'email': 'no_name1778450813765654@test.com', 'telefono': '0913765655'}
+HTTP status: 200
+Time (s): 0.0390
+Response: {'jsonrpc': '2.0', 'id': None, 'result': {'success': False, 'error': 'El campo "name" es obligatorio para crear un cliente.'}}
+---
+Test: Crear producto válido
+Path: /techstore/api/products
+Payload: {'name': 'Teclado', 'codigo': 'TK-1778450813765654', 'precio_unitario': 25.5, 'stock_disponible': 10}
+HTTP status: 200
+Time (s): 0.0325
+Response: {'jsonrpc': '2.0', 'id': None, 'result': {'success': True, 'id': 12}}
+---
+Test: Crear producto con precio negativo (error esperado)
+Path: /techstore/api/products
+Payload: {'name': 'ProductoNeg', 'codigo': 'TK-NEG-1778450813765654', 'precio_unitario': -5, 'stock_disponible': 5}
+HTTP status: 200
+Time (s): 0.0173
+Response: {'jsonrpc': '2.0', 'id': None, 'result': {'success': False, 'error': 'El precio unitario no puede ser negativo.'}}
+---
+Test: Crear venta válida
+Path: /techstore/api/sales
+Payload: {'cliente_id': 20, 'producto_id': 12, 'cantidad': 2}
+HTTP status: 200
+Time (s): 0.0321
+Response: {'jsonrpc': '2.0', 'id': None, 'result': {'success': True, 'id': 4, 'subtotal': 51.0, 'iva': 2.5500000000000003, 'total': 53.55, 'tiempo_respuesta': 0.270170981628687}}
+---
+Test: Crear venta excediendo stock (error esperado)
+Path: /techstore/api/sales
+Payload: {'cliente_id': 20, 'producto_id': 12, 'cantidad': 9999}
+HTTP status: 200
+Time (s): 0.0262
+Response: {'jsonrpc': '2.0', 'id': None, 'result': {'success': False, 'error': 'No hay suficiente stock disponible para este producto.'}}
+---
+Test: Listar productos (GET)
+Path: /techstore/api/products
+Payload: None
+HTTP status: 200
+Time (s): 0.0306
+Response: [{'id': 1, 'name': 'Laptop', 'codigo': 'PROD-001', 'precio_unitario': 850.0, 'stock_disponible': 5, 'activo': True}, {'id': 4, 'name': 'Monitor', 'codigo': 'PROD-004', 'precio_unitario': 220.0, 'stock_disponible': 3, 'activo': True}, {'id': 2, 'name': 'Mouse', 'codigo': 'PROD-002', 'precio_unitario': 15.0, 'stock_disponible': 20, 'activo': True}, {'id': 8, 'name': 'Teclado', 'codigo': 'TK-1778449912477811', 'precio_unitario': 25.5, 'stock_disponible': 10, 'activo': True}, {'id': 9, 'name': 'Teclado', 'codigo': 'TK-1778449942996491', 'precio_unitario': 25.5, 'stock_disponible': 10, 'activo': True}, {'id': 10, 'name': 'Teclado', 'codigo': 'TK-1778450002246727', 'precio_unitario': 25.5, 'stock_disponible': 8, 'activo': True}, {'id': 11, 'name': 'Teclado', 'codigo': 'TK-1778450128685325', 'precio_unitario': 25.5, 'stock_disponible': 8, 'activo': True}, {'id': 5, 'name': 'Teclado', 'codigo': 'TK-001', 'precio_unitario': 25.5, 'stock_disponible': 8, 'activo': True}, {'id': 12, 'name': 'Teclado', 'codigo': 'TK-1778450813765654', 'precio_unitario': 25.5, 'stock_disponible': 8, 'activo': True}, {'id': 3, 'name': 'Teclado', 'codigo': 'PROD-003', 'precio_unitario': 35.0, 'stock_disponible': 10, 'activo': True}, {'id': 7, 'name': 'Teclado', 'codigo': 'TK-1778449901910767', 'precio_unitario': 25.5, 'stock_disponible': 10, 'activo': True}]
+---
+Test: Listar ventas (GET)
+Path: /techstore/api/sales
+Payload: None
+HTTP status: 200
+Time (s): 0.0331
+Response: [{'id': 4, 'name': 'Nueva venta', 'cliente_id': 20, 'producto_id': 12, 'cantidad': 2, 'precio_unitario': 25.5, 'subtotal': 51.0, 'iva': 2.5500000000000003, 'total': 53.55, 'tiempo_respuesta': 0.270170981628687}, {'id': 3, 'name': 'Nueva venta', 'cliente_id': 18, 'producto_id': 11, 'cantidad': 2, 'precio_unitario': 25.5, 'subtotal': 51.0, 'iva': 2.5500000000000003, 'total': 53.55, 'tiempo_respuesta': 0.2931093579521211}, {'id': 2, 'name': 'Nueva venta', 'cliente_id': 16, 'producto_id': 10, 'cantidad': 2, 'precio_unitario': 25.5, 'subtotal': 51.0, 'iva': 2.5500000000000003, 'total': 53.55, 'tiempo_respuesta': 0.3943366514823322}, {'id': 1, 'name': 'Nueva venta', 'cliente_id': 6, 'producto_id': 5, 'cantidad': 2, 'precio_unitario': 25.5, 'subtotal': 51.0, 'iva': 2.5500000000000003, 'total': 53.55, 'tiempo_respuesta': 0.17017764036169564}]
+---
+Test: Crear cliente con teléfono inválido (error esperado)
+Path: /techstore/api/clients
+Payload: {'name': 'Ana', 'cedula': '3000765654', 'email': 'ana1778450813765654@test.com', 'telefono': '12345474'}
+HTTP status: 200
+Time (s): 0.0281
+Response: {'jsonrpc': '2.0', 'id': None, 'result': {'success': False, 'error': 'duplicate key value violates unique constraint "techstore_cliente_telefono_unique"\nDETAIL:  Key (telefono)=(12345474) already exists.\n'}}
+
+
+**Resumen de pruebas**
+Total tests: 9
+Pasados: 5
+Fallados: 4
+Provocados (errores esperados): 4
+Tiempo total requests (s): 0.2770
+Tiempo promedio por request (s): 0.0308
+
+Total requests time (s): 0.2770

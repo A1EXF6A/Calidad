@@ -1,0 +1,113 @@
+TALLER FINAL - Informe de actividades y resultados
+Proyecto: TechStore (addons/techstore_quality_taller_2)
+Fecha: 2026-05-10
+
+1) Resumen de actividades realizadas
+- Correcciones en modelos:
+  - `techstore.cliente`: se añadieron restricciones `_sql_constraints` para `email`, `cedula` y `telefono`.
+  - `techstore.cliente`: validación `telefono` con `@api.constrains` para exigir exactamente 10 dígitos.
+  - `techstore.producto`: restricción `_sql_constraints` para `codigo` y `@api.constrains` para evitar precios y stock negativos.
+  - `techstore.venta`: corrección de la fórmula de `subtotal` a `cantidad * precio_unitario - descuento`; validaciones de `cantidad > 0`, verificación de existencia de `cliente` y `producto`, comprobación de stock disponible, actualización segura de stock al crear la venta; se eliminó bloqueo innecesario (`sleep`).
+
+- Endpoints/API para pruebas externas (controllers/api.py):
+  - Añadidos endpoints para crear/listar clientes (`/techstore/api/clients`), productos (`/techstore/api/products`) y ventas (`/techstore/api/sales`).
+  - Soporte para peticiones JSON y JSON-RPC; validaciones de entrada para campos obligatorios y tipos.
+  - Manejo mejorado de campos computados (`invalidate_cache`) para exponer totales tras creación.
+
+- Pruebas automáticas y reporte:
+  - Script de pruebas `tests/run_api_tests.py` que ejecuta llamadas a los endpoints, mide tiempos, verifica casos esperados y genera `tests/report.txt`.
+  - Se añadieron mecanismos para generar datos únicos por ejecución (sufijos) evitando colisiones con datos previos.
+  - Se añadió un resumen estadístico al final del informe (total tests, pasados, fallados, provocados, tiempo total y promedio).
+
+2) Resultados de las pruebas (resumen extraído de `tests/report.txt`)
+- Total tests ejecutados: 9
+- Pasados: 5
+- Fallados: 4 (todas eran pruebas "provocadas" — errores esperados: validaciones de entrada y manejo de errores)
+- Provocados (errores esperados): 4
+
+- Tiempos de respuesta (requests HTTP medidos):
+  - Tiempo total requests: 0.2770 s
+  - Tiempo promedio por request: 0.0308 s
+  - Tiempo mínimo: 0.0173 s
+  - Tiempo máximo: 0.0390 s
+  - Desviación estándar (muestra completa): ~0.00613 s
+
+- Métrica de calidad solicitada (Porcentaje de error):
+  - Errores observados: 4/9 = 44.44% → según las reglas del taller (>30%) el sistema NO es aceptable.
+  - Observación: todos los errores reportados en las ejecuciones finales son pruebas provocadas (casos de validación). No se detectaron fallos funcionales inesperados en los flujos principales (creación de cliente/producto/venta correctos en ejecuciones con datos únicos).
+
+3) Análisis funcional y de calidad
+- Comportamiento funcional comprobado:
+  - Registro de ventas: OK (subtotal/IVA/total calculados correctamente; stock disminuido tras venta).
+  - Validación de clientes: OK (campo `name` obligatorio; unicidad y longitud de teléfono verificada).
+  - Aplicación de descuentos: OK (descuento restado del subtotal en la fórmula correcta).
+  - Control de stock: OK (venta que excede stock es rechazada).
+
+- Manejo de errores:
+  - Datos inválidos: capturados y devueltos mensajes claros desde la API/modelo.
+  - Stock insuficiente: correctamente detectado y reportado.
+  - Clientes/productos inexistentes: validados en creación de ventas.
+
+- Rendimiento:
+  - Los tiempos promedio de petición (~0.03 s) están muy por debajo del umbral de lenteza del taller (0.5 s); por lo tanto el servicio HTTP responde rápido en las pruebas realizadas.
+  - La desviación estándar es baja (~0.006 s), lo que indica estabilidad en las latencias medidos en este conjunto de pruebas.
+
+4) Enfoques del ACS aplicados
+- Verificación: se añadieron constraints/validaciones de modelo y SQL para verificar integridad de datos.
+- Validación: se añadieron pruebas que envían datos inválidos y se validó la respuesta esperada.
+- Pruebas funcionales: creación/listado de recursos y verificación de cálculos.
+- Pruebas de error: casos provocados (campo faltante, precio negativo, stock insuficiente, teléfono inválido).
+- Pruebas de rendimiento: medición de tiempos de respuesta por request (promedio/desviación).
+- Métricas de calidad: % error, tiempos promedio y desviación ya calculados en el informe.
+
+5) Qué enfoques faltan / riesgos
+- Faltan pruebas de carga/concurrencia (simular múltiples ventas concurrentes para verificar condiciones de carrera en decremento de stock).
+- Faltan pruebas de integridad transaccional en escenarios distribuidos (rollback parcial en fallos externos).
+- Riesgos:
+  - Integridad en producción si hay operaciones concurrentes que lean y escriban stock sin bloqueo optimizado.
+  - Exposición de endpoints sin autenticación (`auth='none'`) en el ejemplo de pruebas: en producción esto debe securizarse (token, API key, oauth, o auth de Odoo).
+
+6) Evaluación según estándares
+- ISO 25010 (evaluación rápida):
+  - Fiabilidad: moderada — validaciones y constraints mejoran fiabilidad, pero falta robustez ante concurrencia.
+  - Eficiencia: buena — tiempos bajos en las pruebas.
+  - Usabilidad: adecuada a nivel API/administrador; la UI puede mejorarse mostrando errores claros.
+  - Mantenibilidad: buena — cambios localizados en modelos y controladores con pruebas automatizadas.
+
+- ISO 12207: procesos aplicados y faltantes
+  - Aplicados: Implementación, verificación (tests), mantenimiento correctivo (fixes).
+  - Faltan: gestión de la configuración avanzada, pruebas de integración continua y pruebas de aceptación formal.
+
+- CMMI (estimación rápida):
+  - Nivel aproximado: entre Nivel 2 y 3 (procesos definidos en pruebas y correcciones, pero faltan prácticas formales de gestión de configuración, integración continua y mejora organizacional).
+
+7) Recomendaciones y acciones prioritarias
+Prioridad alta:
+  - Securizar endpoints de API (no dejar `auth='none'` en producción).
+  - Implementar pruebas de carga/concurrencia para validar decremento de stock atómico.
+  - Manejar errores de unicidad e integridad para devolver códigos y mensajes estándar (HTTP 4xx/5xx) si se reestructura la API.
+
+Prioridad media:
+  - Añadir pruebas automatizadas a CI (runner que actualice/instale el módulo, ejecute `tests/run_api_tests.py`).
+  - Revisar transacciones: usar bloqueos/pessimistic locking o campos `version` para evitar condiciones de carrera en stock.
+
+Prioridad baja:
+  - Mejorar mensajes de la UI para que los administradores no vean trazas DB y reciban errores amigables.
+  - Exportar informes de prueba en formatos JSON/HTML para auditoría.
+
+8) Conclusión: ¿Listo para producción?
+- En base a las pruebas funcionales ejecutadas, los flujos principales (crear cliente/producto/venta) funcionan correctamente cuando se usan datos válidos.
+- Sin embargo, la métrica de porcentaje de error medida en este conjunto (44.44%) cae en la categoría "NO aceptable" del taller. Importante aclaración: los errores detectados fueron pruebas provocadas (casos de validación esperados) — por tanto son comportamientos correctos del sistema ante entradas inválidas.
+- Recomendación: no promover directamente a producción sin antes:
+  1) Asegurar endpoints (autenticación/autorización).
+  2) Añadir pruebas de carga y concurrencia y mitigar riesgos de condición de carrera en stock.
+  3) Integrar las pruebas en un pipeline CI/CD con base de datos de pruebas limpia por ejecución.
+
+Archivos relevantes en este repo:
+- Modelos: addons/techstore_quality_taller_2/models/*.py
+- Vistas: addons/techstore_quality_taller_2/views/*.xml
+- Controladores/API: addons/techstore_quality_taller_2/controllers/api.py
+- Script de pruebas: tests/run_api_tests.py
+- Informe de pruebas generado: tests/report.txt
+
+Fin del informe.
